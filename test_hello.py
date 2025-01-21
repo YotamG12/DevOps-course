@@ -1,5 +1,5 @@
 import unittest
-from mypy import say_hello
+from app import say_hello
 
 class TestMypy(unittest.TestCase):
     def test_say_hello(self):
