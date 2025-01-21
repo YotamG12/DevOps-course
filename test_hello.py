@@ -1,5 +1,9 @@
 import unittest
-from app import greet
+from mypy import say_hello
 
-def test_greet():
-    assert greet("World") == "Hello, World!"
+class TestMypy(unittest.TestCase):
+    def test_say_hello(self):
+        self.assertEqual(say_hello(), "Hello, world!")
+
+if __name__ == "__main__":
+    unittest.main()
