@@ -1,0 +1,77 @@
+#!/bin/bash
+# Specifies the script should be run using the bash shell.
+
+SOURCE_DIR=~/personal
+# Sets the source directory to be backed up (default is "~/personal").
+
+BACKUP_DIR="$HOME"
+# Sets the backup directory where backups will be stored (default is the user's home directory).
+
+TIMESTAMP=$(date +"%Y_%m_%d_%H_%M_%S")
+# Creates a timestamp in the format "YYYY_MM_DD_HH_MM_SS".
+
+BACKUP_ARCHIVE="backup_archive_$TIMESTAMP"
+# Names the backup archive with the prefix "backup_archive_" followed by the timestamp.
+
+if [ -d "$SOURCE_DIR" ]; then
+    # Checks if the source directory exists.
+
+    mkdir -p "$BACKUP_DIR/$BACKUP_ARCHIVE"
+    # Creates the backup directory with the timestamped name.
+
+    chown vboxuser:vboxuser "$BACKUP_DIR/$BACKUP_ARCHIVE"
+    # Changes the ownership of the backup directory to the "vboxuser" user and group.
+
+    chmod 755 "$BACKUP_DIR/$BACKUP_ARCHIVE"
+    # Sets permissions on the backup directory (read, write, execute for owner; read and execute for others).
+
+    rsync -a --exclude="backup_archive_*" "$SOURCE_DIR/" "$BACKUP_DIR/$BACKUP_ARCHIVE/"
+    # Copies files from the source directory to the backup directory using `rsync`.
+    # Excludes any directories or files matching the pattern "backup_archive_*".
+
+    echo "Backup created: $BACKUP_DIR/$BACKUP_ARCHIVE"
+    # Prints a message indicating the backup was successfully created.
+
+else
+    # If the source directory doesn't exist:
+
+    echo "Source directory does not exist: $SOURCE_DIR"
+    # Prints an error message.
+
+    exit 1
+    # Exits the script with a non-zero status (indicating an error).
+
+fi
+# End of the `if` block.
+
+cd "$BACKUP_DIR" || exit
+# Changes to the backup directory or exits if the change directory command fails.
+
+BACKUPS=($(ls -d backup_archive_* 2>/dev/null | sort))
+# Lists all directories starting with "backup_archive_".
+# Redirects errors (e.g., no matching directories) to `/dev/null`.
+# Sorts the output and stores the list in the `BACKUPS` array.
+
+if [ ${#BACKUPS[@]} -gt 3 ]; then
+    # Checks if the number of backup directories is greater than 3.
+
+    TO_DELETE_COUNT=$((${#BACKUPS[@]} - 3))
+    # Calculates how many old backups need to be deleted (total backups minus 3).
+
+    for ((i=0; i<TO_DELETE_COUNT; i++)); do
+        # Loops through the backups to delete the oldest ones.
+
+        rm -rf "${BACKUPS[i]}"
+        # Deletes the directory at index `i` in the `BACKUPS` array.
+
+        echo "Deleted old backup: ${BACKUPS[i]}"
+        # Prints a message indicating which backup was deleted.
+
+    done
+fi
+# End of the `if` block.
+
+ls -l | grep 'backup_archive_' | column -t
+# Lists files and directories in long format.
+# Filters the output to include only lines containing "backup_archive_".
+# Formats the output into columns for better readability.
